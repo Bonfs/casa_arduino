@@ -1,6 +1,5 @@
+#include <Ultrasonic.h>// by Erick Simões
 #include <SoftwareSerial.h>
-
-//#include <Ultrasonic.h>
 #include <Servo.h>
 
 #define SERVO 9
@@ -8,19 +7,23 @@
 #define ECHO 7
 #define TRIGGER 6
 #define TIMEOUT 2000
+#define RX 10
+#define TX 11
 
 Servo servo;
 Ultrasonic ultrasonic(TRIGGER, ECHO, TIMEOUT);
-SoftwareSerial bluetooth(0, 1); //RX, TX
+SoftwareSerial bluetooth(RX, TX); //RX, TX
 int incomingByte;
 int pos = 0;// Posição 0 o portão está aberto, Posição 125 o portão está aberto
 float seno;
 
-void setup() {
+void setup(){
   // put your setup code here, to run once:
   //pos = 45;
-  Serial.begin(9600);
+  Serial.begin(57600);
   bluetooth.begin(9600);
+  bluetooth.println("Hello, world?");
+  
   servo.attach(SERVO);
   servo.write(pos);
   pinMode(13, OUTPUT);
@@ -31,17 +34,20 @@ void setup() {
   digitalWrite(11, LOW);//GND mode
 }
 
-void loop() {  
+void loop(){  
   // put your main code here, to run repeatedly:
   //openGate();
   //closeGate();
   //calcDistance();
   if(bluetooth.available()){
+    bluetooth.println("received");
     incomingByte = bluetooth.read();
+    Serial.println(incomingByte);
   }
-
   //ativa o alarme
   if (incomingByte == 'a'){
+    bluetooth.println("alarme");
+    alarm();
     /*if(calcDistance() < 9.0){
     closeGate(true);
     //alarm();
@@ -57,10 +63,7 @@ void loop() {
   } else{
     
     noTone(TONE);
-  }
-  
-
-  
+  }  
 }
 
 void openGate(){
@@ -106,10 +109,10 @@ void alarm(){
   }
 }
 
-/*float calcDistance(){
-  float distanceCM = ultrasonic.Ranging(CM);
+float calcDistance(){
+  float distanceCM = ultrasonic.distanceRead(CM);
   Serial.print(distanceCM);
   Serial.println(" cm");
   return distanceCM;
-}*/
+}
 
