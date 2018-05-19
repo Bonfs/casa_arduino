@@ -4,41 +4,39 @@
 
 #define SERVO 9
 #define TONE 5
-#define ECHO 7
-#define TRIGGER 6
+#define ECHO 13
+#define TRIGGER 12
 #define TIMEOUT 2000
 #define RX 10
 #define TX 11
 
 Servo servo;
-Ultrasonic ultrasonic(TRIGGER, ECHO, TIMEOUT);
+Ultrasonic ultrasonic(TRIGGER, ECHO);//, TIMEOUT);
 SoftwareSerial bluetooth(RX, TX); //RX, TX
 int incomingByte;
 int pos = 0;// Posição 0 o portão está aberto, Posição 125 o portão está aberto
 float seno;
+int alarmEnabled = 0;
+
 
 void setup(){
   // put your setup code here, to run once:
   //pos = 45;
-  Serial.begin(57600);
+  Serial.begin(9600);
   bluetooth.begin(9600);
   bluetooth.println("Hello, world?");
   
   servo.attach(SERVO);
   servo.write(pos);
-  pinMode(13, OUTPUT);
-  digitalWrite(13, HIGH);//VCC mode
-  pinMode(12, OUTPUT);
-  digitalWrite(12, HIGH);//VCC mode
-  pinMode(11, OUTPUT);
-  digitalWrite(11, LOW);//GND mode
+  //pinMode(11, OUTPUT);
+  //digitalWrite(11, LOW);//GND mode
 }
 
 void loop(){  
   // put your main code here, to run repeatedly:
   //openGate();
   //closeGate();
-  //calcDistance();
+  calcDistance();
   if(bluetooth.available()){
     bluetooth.println("received");
     incomingByte = bluetooth.read();
@@ -46,14 +44,14 @@ void loop(){
   }
   //ativa o alarme
   if (incomingByte == 'a'){
+    alarmEnabled = 1;
     bluetooth.println("alarme");
-    alarm();
-    /*if(calcDistance() < 9.0){
-    closeGate(true);
-    //alarm();
-  } else{
-    openGate(true);
-  }*/
+    if(calcDistance() < 9.0){
+      closeGate(true);
+      alarm();
+    } else{
+      openGate(true);
+    }
   } else if (incomingByte == 'o'){
     //abre a porta
     openGate(true);
@@ -61,9 +59,9 @@ void loop(){
     //fecha a porta
     closeGate();
   } else{
-    
+    alarmEnabled = 0;
     noTone(TONE);
-  }  
+  }
 }
 
 void openGate(){
