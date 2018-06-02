@@ -9,14 +9,17 @@
 #define TIMEOUT 2000
 #define RX 10
 #define TX 11
+#define LIGHT 3
 
 Servo servo;
 Ultrasonic ultrasonic(TRIGGER, ECHO);//, TIMEOUT);
 SoftwareSerial bluetooth(RX, TX); //RX, TX
+const byte numChars = 32;
 int incomingByte;
 int pos = 0;// Posição 0 o portão está aberto, Posição 125 o portão está aberto
 float seno;
 int alarmEnabled = 0;
+int light = 0;
 
 
 void setup(){
@@ -28,7 +31,7 @@ void setup(){
   
   servo.attach(SERVO);
   servo.write(pos);
-  //pinMode(11, OUTPUT);
+  pinMode(LIGHT, OUTPUT);
   //digitalWrite(11, LOW);//GND mode
 }
 
@@ -36,32 +39,51 @@ void loop(){
   // put your main code here, to run repeatedly:
   //openGate();
   //closeGate();
-  calcDistance();
+  //calcDistance();
+  //analogWrite(LIGHT, 255);
+  //digitalWrite(LIGHT, HIGH);
   if(bluetooth.available()){
     bluetooth.println("received");
     incomingByte = bluetooth.read();
+    //byte receivedChars[numChars];
+    //receivedChars = bluetooth.read();
+    //Serial.println((char*)receivedChars);
     Serial.println(incomingByte);
   }
-  //ativa o alarme
-  if (incomingByte == 'a'){
-    alarmEnabled = 1;
-    bluetooth.println("alarme");
-    if(calcDistance() < 9.0){
-      closeGate(true);
-      alarm();
-    } else{
-      openGate(true);
+
+  if(incomingByte < 1000){
+    switch(incomingByte){
+      case 'a':
+        alarmEnabled = 1;
+        bluetooth.println("alarme");
+        if(calcDistance() < 9.0){
+          closeGate(true);
+          alarm();
+        } else{
+          openGate(true);
+        }
+        break;
+      case 'o':
+        //abre a porta
+        openGate(true);
+        break;
+      case 'c':
+        //fecha a porta
+        closeGate();
+        break;
+      case 'l':
+        //fecha a porta
+        turnOnLight();
+        break;
+      default:
+        alarmEnabled = 0;
+        noTone(TONE);
+        break;
     }
-  } else if (incomingByte == 'o'){
-    //abre a porta
-    openGate(true);
-  } else  if (incomingByte == 'c'){
-    //fecha a porta
-    closeGate();
   } else{
-    alarmEnabled = 0;
-    noTone(TONE);
+    setLight(incomingByte - 1000);
   }
+  
 }
 
 void openGate(){
@@ -113,4 +135,20 @@ float calcDistance(){
   Serial.println(" cm");
   return distanceCM;
 }
+
+void turnOffLight(){
+  light = 0;
+  analogWrite(LIGHT, light);
+}
+
+void turnOnLight(){
+  light = 255;
+  analogWrite(LIGHT, light);
+}
+
+void setLight(int value){
+  light = value;
+  analogWrite(LIGHT, light);
+}
+
 
